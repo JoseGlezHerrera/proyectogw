@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guild Wars 2 - Precios e Historial</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Importar Chart.js -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        table {
+            margin: auto;
+            border-collapse: collapse;
+            width: 80%;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        td {
+            background-color: #f2f2f2;
+        }
+        canvas {
+            max-width: 800px;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>📊 Precios e Historial - Guild Wars 2</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre del Objeto</th>
+                <th>Precio de Compra</th>
+                <th>Precio de Venta</th>
+                <th>Precio Medio Últimos 15 Días</th>
+            </tr>
+        </thead>        
+        <tbody id="tabla-precios">
+            <tr><td colspan="5">Cargando datos...</td></tr>
+        </tbody>
+    </table>
+
+    <h2>📈 Historial de Precio Medio (15 Días)</h2>
+    <canvas id="precioChart"></canvas>
+
+    <script>
+        const ids = [24358, 24289, 19721, 46738]; // IDs de los ítems a seguir
+        const apiKey = "B7C2ED44-D98C-8A4E-A39B-166EA28E9A9BECCEF6B8-A431-4A3C-9ECE-ECCFE81604EC"; // Reemplaza esto con tu API Key de Guild Wars 2
+        let preciosHistorial = JSON.parse(localStorage.getItem("preciosHistorial")) || {}; // Guardar historial localmente
+        let precioChart; // Variable para el gráfico
+
+        function convertirMoneda(cobre) {
+    let oro = Math.floor(cobre / 10000);
+    let plata = Math.floor((cobre % 10000) / 100);
+    let cobreRestante = cobre % 100;
+
+    return `<span style="color:black; font-weight:bold;">${oro}</span> 
+            <span style="color:gold; font-weight:bold;">🟡</span> 
+            <span style="color:black; font-weight:bold;">${plata.toString().padStart(2, '0')}</span> 
+            <span style="color:#FFFFFF; font-weight:bold; text-shadow: 0px 0px 2px #000000;">⚪</span> 
+            <span style="color:black; font-weight:bold;">${cobreRestante.toString().padStart(2, '0')}</span> 
+            <span style="color:brown; font-weight:bold;">🟤</span>`;
+}
+
+
+        async function obtenerPrecios() {
+            try {
+                // Obtener nombres de los ítems
+                const responseItems = await fetch(`https://api.guildwars2.com/v2/items?ids=${ids.join(",")}`);
+                const itemsData = await responseItems.json();
+                const itemsMap = {}; // Para mapear ID -> Nombre del objeto
+                itemsData.forEach(item => {
+                    itemsMap[item.id] = item.name;
+                });
+
+                // Obtener precios actuales
+                const responsePrices = await fetch(`https://api.guildwars2.com/v2/commerce/prices?ids=${ids.join(",")}`);
+                const pricesData = await responsePrices.json();
+
+                let tabla = document.getElementById("tabla-precios");
+                tabla.innerHTML = ""; // Limpiar la tabla antes de actualizar
+
+                let hoy = new Date().toISOString().split("T")[0]; // Fecha actual (YYYY-MM-DD)
+
+                pricesData.forEach(item => {
+                    let nombre = itemsMap[item.id] || "Desconocido";
+                    let precioCompra = convertirMoneda(item.buys.unit_price);
+                    let precioVenta = convertirMoneda(item.sells.unit_price);
+
+                    // Guardar datos en historial
+                    if (!preciosHistorial[item.id]) preciosHistorial[item.id] = {};
+                    preciosHistorial[item.id][hoy] = (item.buys.unit_price + item.sells.unit_price) / 2;
+
+                    // Mantener solo los últimos 15 días en historial
+                    let fechas = Object.keys(preciosHistorial[item.id]).sort().slice(-15);
+                    let precios = fechas.map(fecha => preciosHistorial[item.id][fecha]);
+                    preciosHistorial[item.id] = fechas.reduce((acc, fecha, i) => {
+                        acc[fecha] = precios[i];
+                        return acc;
+                    }, {});
+
+                    let precioMedio15Dias = convertirMoneda(precios.reduce((a, b) => a + b, 0) / precios.length);
+
+                    let row = `<tr>
+                        <td>${nombre}</td>
+                        <td>${precioCompra}</td>
+                        <td>${precioVenta}</td>
+                        <td>${precioMedio15Dias}</td>
+                    </tr>`;
+                    tabla.innerHTML += row;
+                });
+
+                // Guardar historial en LocalStorage
+                localStorage.setItem("preciosHistorial", JSON.stringify(preciosHistorial));
+
+                // Actualizar gráfico
+                actualizarGrafico();
+            } catch (error) {
+                console.error("Error al obtener datos:", error);
+                document.getElementById("tabla-precios").innerHTML = `<tr><td colspan="5">Error al cargar datos</td></tr>`;
+            }
+        }
+
+        function actualizarGrafico() {
+            let ctx = document.getElementById("precioChart").getContext("2d");
+
+            let labels = Object.keys(preciosHistorial[ids[0]] || {}).slice(-15); // Fechas
+            let datasets = ids.map(id => ({
+                label: `Item ${id}`,
+                data: Object.values(preciosHistorial[id] || {}).slice(-15),
+                borderWidth: 2,
+                fill: false,
+                borderColor: `hsl(${Math.random() * 360}, 70%, 50%)`
+            }));
+
+            // Si el gráfico ya existe, destruirlo antes de crear uno nuevo
+            if (precioChart instanceof Chart) {
+                precioChart.destroy();
+            }
+
+            // Crear nuevo gráfico
+            precioChart = new Chart(ctx, {
+                type: "line",
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: false } }
+                }
+            });
+        }
+
+        obtenerPrecios();
+        setInterval(obtenerPrecios, 1800000); // Actualizar cada 30 minutos (1800000 ms = 30 min)
+    </script>
+</body>
+</html>
