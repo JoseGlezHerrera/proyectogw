@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guild Wars 2 Tracker - Home</title>
+    <title>Guild Wars 2 Tracker</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
@@ -17,6 +17,7 @@
             <ul>
                 <li><a href="index.html" class="active">Home</a></li>
                 <li><a href="profit-calculator.html">Profit Calculator</a></li>
+                <li><a href="sniper.html">Sniper</a></li>
             </ul>
         </nav>
     </aside>
@@ -32,8 +33,8 @@
 
     <!-- Contenido Principal -->
     <main class="main-content">
-        <section id="home" class="section">
-            <h2 id="home-title">Item Tracker</h2>
+        <section id="item-tracker" class="section">
+            <h2 id="tracker-title">Item Tracker</h2>
             <table class="modern-table">
                 <thead>
                     <tr>
@@ -51,17 +52,18 @@
 
     <script>
         let currentLanguage = 'en'; // Idioma por defecto
-        const itemIds = [19684, 19702, 46738, 19721, 24277]; // IDs de los objetos
+        const itemIds = [19721, 24277]; // IDs de los objetos
 
+        // Cambiar idioma y actualizar el contenido
         function changeLanguage(lang) {
             currentLanguage = lang; // Cambia el idioma actual
             if (lang === 'en') {
-                document.getElementById('home-title').innerText = 'Item Tracker';
+                document.getElementById('tracker-title').innerText = 'Item Tracker';
                 document.getElementById('item-name-header').innerText = 'Item';
                 document.getElementById('buy-price-header').innerText = 'Buy Price';
                 document.getElementById('sell-price-header').innerText = 'Sell Price';
             } else if (lang === 'es') {
-                document.getElementById('home-title').innerText = 'Rastreador de Objetos';
+                document.getElementById('tracker-title').innerText = 'Rastreador de Objetos';
                 document.getElementById('item-name-header').innerText = 'Objeto';
                 document.getElementById('buy-price-header').innerText = 'Precio de Compra';
                 document.getElementById('sell-price-header').innerText = 'Precio de Venta';
@@ -71,11 +73,9 @@
 
         async function fetchItemData() {
             try {
-                // Obtiene detalles de los objetos con el idioma seleccionado
                 const itemDetails = await fetch(`https://api.guildwars2.com/v2/items?ids=${itemIds.join(",")}&lang=${currentLanguage}`);
                 const items = await itemDetails.json();
 
-                // Obtiene los precios actuales
                 const itemPrices = await fetch(`https://api.guildwars2.com/v2/commerce/prices?ids=${itemIds.join(",")}`);
                 const prices = await itemPrices.json();
 
@@ -109,12 +109,9 @@
         function formatCurrency(value) {
             const gold = Math.floor(value / 10000);
             const silver = Math.floor((value % 10000) / 100);
-            const copper = value % 100;
-
             return `
                 <span class="gold">${gold} 🟡</span>
                 <span class="silver">${silver.toString().padStart(2, "0")} ⚪</span>
-                <span class="copper">${copper.toString().padStart(2, "0")} 🟤</span>
             `;
         }
 

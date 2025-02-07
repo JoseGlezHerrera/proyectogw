@@ -31,7 +31,7 @@ body {
 
 .sidebar h1 {
     font-size: 24px;
-    color: #e74c3c;
+    color: white;
     margin: 0;
 }
 
@@ -225,4 +225,21 @@ td span {
         width: 40px; /* Reducir el tamaño de los íconos en móviles */
         height: 40px;
     }
+
+    .currency {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-start;
+    }
+    
+    .currency span {
+        margin-right: 5px;
+    }
+    
+    .currency-icon {
+        width: 18px;
+        height: 18px;
+        margin-left: 3px;
+    }
+
 }

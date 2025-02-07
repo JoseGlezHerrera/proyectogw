@@ -17,6 +17,7 @@
             <ul>
                 <li><a href="index.html">Home</a></li>
                 <li><a href="profit-calculator.html" class="active">Profit Calculator</a></li>
+                <li><a href="sniper.html">Sniper</a></li>
             </ul>
         </nav>
     </aside>
@@ -56,10 +57,10 @@
             { id: 24294, quantity: 50 }, // Material 1
             { id: 24295, quantity: 1 }, // Material 2
             { id: 24277, quantity: 5 },  // Polvo
-            { id: 20796, quantity: 5 }   // Polvo adicional
+            { id: 20796, quantity: 5 }   // Piedra Filosofal
         ];
         const resultingItemId = 24295; // ID del objeto resultante
-        const resultingItemQuantity = 7; // Cantidad de objetos resultantes
+        const resultingItemQuantity = 6; // Cantidad de objetos resultantes
 
         // Cambiar idioma y actualizar el contenido
         function changeLanguage(lang) {
@@ -155,11 +156,13 @@
 
         // Función para formatear la moneda
         function formatCurrency(value) {
-            return (value / 10000).toFixed(2) + ' 🪙'; // Convertir a oro
+            const gold = Math.floor(value / 10000);
+            const silver = Math.floor((value % 10000) / 100);
+            return `${gold > 0 ? gold + ' Gold' : ''} ${silver > 0 ? silver + ' Silver' : ''}`.trim();
         }
 
         // Llamada inicial para obtener los datos
         fetchProfitData();
     </script>
 </body>
-</html> 
+</html>
