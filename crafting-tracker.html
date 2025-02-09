@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Objetos Crafteables</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="sidebar">
+        <h2>GW2 Tracker</h2>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="profit-calculator.html">Profit Calculator</a></li>
+            <li><a href="sniper.html">Sniper</a></li>
+            <li><a href="crafting-tracker.html" class="active">Crafting Tracker</a></li>
+        </ul>
+    </div>
+
+    <div class="content">
+        <h1>Objetos Crafteables</h1>
+        <div class="button-container">
+            <button id="search-button" onclick="fetchCraftableItems()">Buscar Objetos Crafteables</button>
+            <button id="clear-button" onclick="clearResults()">Limpiar Resultados</button>
+        </div>
+        <div id="loading-spinner" class="spinner"></div>
+        <table>
+            <thead>
+                <tr>
+                    <th class="sortable" onclick="sortTable(0)">Nombre</th>
+                    <th class="sortable" onclick="sortTable(1)">Nivel</th>
+                    <th class="sortable" onclick="sortTable(2)">Rareza</th>
+                    <th class="sortable" onclick="sortTable(3)">Precio de Crafteo</th>
+                </tr>
+            </thead>
+            <tbody id="crafting-table">
+                <tr><td colspan="4" id="placeholder-text">Presiona el botón para buscar...</td></tr>
+            </tbody>
+        </table>
+        <p id="error-message"></p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

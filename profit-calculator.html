@@ -4,98 +4,146 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guild Wars 2 Tracker - Profit Calculator</title>
-    <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css"> <!-- Usar el mismo CSS global -->
 </head>
 <body>
-    <!-- Menú Lateral -->
-    <aside class="sidebar">
-        <div class="logo">
-            <h1>GW2 Tracker</h1>
-        </div>
-        <nav class="menu">
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="profit-calculator.html" class="active">Profit Calculator</a></li>
-                <li><a href="sniper.html">Sniper</a></li>
-            </ul>
-        </nav>
-    </aside>
-
-    <!-- Selector de Idioma -->
-    <div class="language-selector">
-        <button class="language-btn" onclick="changeLanguage('en')">English</button>
-        <button class="language-btn" onclick="changeLanguage('es')">Español</button>
+    <div class="sidebar">
+        <h2>GW2 Tracker</h2>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="profit-calculator.html" class="active">Profit Calculator</a></li>
+            <li><a href="sniper.html">Sniper</a></li>
+            <li><a href="crafting-tracker.html" class="active">Crafting Tracker</a></li>
+        </ul>
     </div>
 
-    <!-- Contenido Principal -->
-    <main class="main-content">
-        <section id="profit-calculator" class="section">
-            <h2 id="profit-title">Profit Calculator</h2>
-            <table class="modern-table">
-                <thead>
-                    <tr>
-                        <th id="material1-header">Material 1</th>
-                        <th id="material2-header">Material 2</th>
-                        <th id="dust-header">Dust</th>
-                        <th id="stone-header">Philosopher's Stone</th>
-                        <th id="result-header">Resulting Item</th>
-                        <th id="combined-header">Combined Value</th>
-                        <th id="profit-header">Profit</th>
-                    </tr>
-                </thead>
-                <tbody id="profit-table">
-                    <!-- Fila generada dinámicamente -->
-                </tbody>
-            </table>
-        </section>
-    </main>
+    <div class="content">
+        <h1>Profit Calculator</h1>
+        <div class="button-container">
+            <button onclick="fetchProfitData()">Calcular Beneficios</button>
+            <button id="clear-button" onclick="clearResults()">Limpiar Resultados</button>
+        </div>
+        <div id="loading-spinner" class="spinner"></div>
+        <table>
+            <thead>
+                <tr>
+                    <th class="sortable" onclick="sortTable(0)">Material 1</th>
+                    <th class="sortable" onclick="sortTable(1)">Material 2</th>
+                    <th class="sortable" onclick="sortTable(2)">Polvo</th>
+                    <th class="sortable" onclick="sortTable(3)">Piedra Filosofal</th>
+                    <th class="sortable" onclick="sortTable(4)">Objeto Resultante</th>
+                    <th class="sortable" onclick="sortTable(5)">Valor Combinado</th>
+                    <th class="sortable" onclick="sortTable(6)">Beneficio</th>
+                </tr>
+            </thead>
+            <tbody id="profit-table">
+                <tr><td colspan="7">Presiona el botón para calcular...</td></tr>
+            </tbody>
+        </table>
+        <p id="error-message"></p>
+    </div>
 
     <script>
         let currentLanguage = 'en'; // Idioma por defecto
-        const materials = [
-            { id: 24294, quantity: 50 }, // Material 1
-            { id: 24295, quantity: 1 }, // Material 2
-            { id: 24277, quantity: 5 },  // Polvo
-            { id: 20796, quantity: 5 }   // Piedra Filosofal
-        ];
-        const resultingItemId = 24295; // ID del objeto resultante
-        const resultingItemQuantity = 6; // Cantidad de objetos resultantes
 
-        // Cambiar idioma y actualizar el contenido
-        function changeLanguage(lang) {
-            currentLanguage = lang;
-            if (lang === 'en') {
-                document.getElementById('profit-title').innerText = 'Profit Calculator';
-                document.getElementById('material1-header').innerText = 'Material 1';
-                document.getElementById('material2-header').innerText = 'Material 2';
-                document.getElementById('dust-header').innerText = 'Dust';
-                document.getElementById('stone-header').innerText = "Philosopher's Stone";
-                document.getElementById('result-header').innerText = 'Resulting Item';
-                document.getElementById('combined-header').innerText = 'Combined Value';
-                document.getElementById('profit-header').innerText = 'Profit';
-            } else if (lang === 'es') {
-                document.getElementById('profit-title').innerText = 'Calculadora de Beneficio';
-                document.getElementById('material1-header').innerText = 'Material 1';
-                document.getElementById('material2-header').innerText = 'Material 2';
-                document.getElementById('dust-header').innerText = 'Polvo';
-                document.getElementById('stone-header').innerText = 'Piedra Filosofal';
-                document.getElementById('result-header').innerText = 'Objeto Resultante';
-                document.getElementById('combined-header').innerText = 'Valor Combinado';
-                document.getElementById('profit-header').innerText = 'Beneficio';
+        // Definir las recetas (6 objetos distintos)
+        const recipes = [
+            {
+                materials: [
+                    { id: 24294, quantity: 50 }, // Material 1
+                    { id: 24295, quantity: 1 },  // Material 2
+                    { id: 24277, quantity: 5 },  // Polvo
+                    { id: 20796, quantity: 5 }   // Piedra Filosofal
+                ],
+                resultingItemId: 24295, // ID del objeto resultante
+                resultingItemQuantity: 6 // Cantidad de objetos resultantes
+            },
+            {
+                materials: [
+                    { id: 24341, quantity: 50 }, // Material 1
+                    { id: 24358, quantity: 1 },  // Material 2
+                    { id: 24277, quantity: 5 }, // Polvo
+                    { id: 20796, quantity: 5 }   // Piedra Filosofal
+                ],
+                resultingItemId: 24358, // ID del objeto resultante
+                resultingItemQuantity: 6 // Cantidad de objetos resultantes
+            },
+            {
+                materials: [
+                    { id: 24350, quantity: 50 }, // Material 1
+                    { id: 24351, quantity: 1 },  // Material 2
+                    { id: 24277, quantity: 5 },  // Polvo
+                    { id: 20796, quantity: 5 }   // Piedra Filosofal
+                ],
+                resultingItemId: 24351, // ID del objeto resultante
+                resultingItemQuantity: 6 // Cantidad de objetos resultantes
+            },
+            {
+                materials: [
+                    { id: 24356, quantity: 50 }, // Material 1
+                    { id: 24357, quantity: 1 },  // Material 2
+                    { id: 24277, quantity: 5 },  // Polvo
+                    { id: 20796, quantity: 5 }   // Piedra Filosofal
+                ],
+                resultingItemId: 24357, // ID del objeto resultante
+                resultingItemQuantity: 6 // Cantidad de objetos resultantes
+            },
+            {
+                materials: [
+                    { id: 24288, quantity: 50 }, // Material 1
+                    { id: 24289, quantity: 1 },  // Material 2
+                    { id: 24277, quantity: 5 },  // Polvo
+                    { id: 20796, quantity: 5 }   // Piedra Filosofal
+                ],
+                resultingItemId: 24289, // ID del objeto resultante
+                resultingItemQuantity: 6 // Cantidad de objetos resultantes
+            },
+            {
+                materials: [
+                    { id: 24299, quantity: 50 }, // Material 1
+                    { id: 24300, quantity: 1 },  // Material 2
+                    { id: 24277, quantity: 5 },  // Polvo
+                    { id: 20796, quantity: 5 }  // Piedra Filosofal
+                ],
+                resultingItemId: 24300, // ID del objeto resultante
+                resultingItemQuantity: 6 // Cantidad de objetos resultantes
+            },
+            {
+                materials: [
+                    { id: 24282, quantity: 50 }, // Material 1
+                    { id: 24283, quantity: 1 },  // Material 2
+                    { id: 24277, quantity: 5 },  // Polvo
+                    { id: 20796, quantity: 5 }  // Piedra Filosofal
+                ],
+                resultingItemId: 24283, // ID del objeto resultante
+                resultingItemQuantity: 6 // Cantidad de objetos resultantes
             }
-            fetchProfitData(); // Recarga los datos con el idioma seleccionado
-        }
+        ];
 
-        // Obtener y mostrar los datos de los objetos y precios
         async function fetchProfitData() {
+            const tableBody = document.getElementById("profit-table");
+            const loadingSpinner = document.getElementById("loading-spinner");
+            const errorMessage = document.getElementById("error-message");
+
+            loadingSpinner.style.display = "block";
+            tableBody.innerHTML = "";
+            errorMessage.textContent = "";
+
             try {
-                const ids = materials.map(mat => mat.id).concat(resultingItemId);
-                const itemDetails = await fetch(`https://api.guildwars2.com/v2/items?ids=${ids.join(",")}&lang=${currentLanguage}`);
+                // Obtener todos los IDs de materiales y objetos resultantes
+                const allIds = recipes.flatMap(recipe => [
+                    ...recipe.materials.map(mat => mat.id),
+                    recipe.resultingItemId
+                ]);
+                const uniqueIds = [...new Set(allIds)]; // Eliminar duplicados
+
+                // Obtener detalles y precios de los ítems
+                const itemDetails = await fetch(`https://api.guildwars2.com/v2/items?ids=${uniqueIds.join(",")}&lang=${currentLanguage}`);
                 const items = await itemDetails.json();
-                const itemPrices = await fetch(`https://api.guildwars2.com/v2/commerce/prices?ids=${ids.join(",")}`);
+                const itemPrices = await fetch(`https://api.guildwars2.com/v2/commerce/prices?ids=${uniqueIds.join(",")}`);
                 const prices = await itemPrices.json();
 
+                // Crear mapas para acceder rápidamente a los detalles y precios
                 const itemsMap = {};
                 items.forEach(item => {
                     itemsMap[item.id] = {
@@ -112,57 +160,93 @@
                     };
                 });
 
-                populateProfitTable(itemsMap, pricesMap); // Llama a la función para poblar la tabla
+                // Generar las filas de la tabla
+                populateProfitTable(itemsMap, pricesMap);
             } catch (error) {
-                console.error("Error fetching profit data:", error); // Manejo de errores
+                console.error("Error obteniendo datos de beneficios:", error);
+                errorMessage.textContent = "Error al obtener datos. Inténtalo de nuevo.";
+            } finally {
+                loadingSpinner.style.display = "none";
             }
         }
 
-        // Función para poblar la tabla con los datos
         function populateProfitTable(itemsMap, pricesMap) {
             const tableBody = document.getElementById("profit-table");
-            tableBody.innerHTML = ""; // Limpia la tabla antes de agregar las nuevas filas
+            tableBody.innerHTML = "";
 
-            // Calculamos el valor combinado de los materiales
-            const combinedValue = materials.reduce((sum, mat) => {
-                return sum + (pricesMap[mat.id]?.buy || 0) * mat.quantity;
-            }, 0);
+            recipes.forEach(recipe => {
+                const combinedValue = recipe.materials.reduce((sum, mat) => {
+                    return sum + (pricesMap[mat.id]?.buy || 0) * mat.quantity;
+                }, 0);
 
-            // Precio de venta del objeto resultante (multiplicamos por 7 unidades)
-            const resultingSellPrice = (pricesMap[resultingItemId]?.sell || 0);
-            const totalResultingValue = resultingSellPrice * resultingItemQuantity; // Considerando 7 unidades
-            const profit = totalResultingValue - combinedValue; // Calculando el beneficio
+                const resultingSellPrice = (pricesMap[recipe.resultingItemId]?.sell || 0);
+                const totalResultingValue = resultingSellPrice * recipe.resultingItemQuantity;
+                const profit = totalResultingValue - combinedValue;
 
-            const row = `
-                <tr>
-                    ${materials.map(mat => `
+                const row = `
+                    <tr>
+                        ${recipe.materials.map(mat => `
+                            <td>
+                                <img src="${itemsMap[mat.id]?.icon}" alt="${itemsMap[mat.id]?.name}" class="item-icon">
+                                <span>x${mat.quantity}</span>
+                            </td>
+                        `).join("")}
                         <td>
-                            <img src="${itemsMap[mat.id]?.icon}" alt="${itemsMap[mat.id]?.name}" class="item-icon">
-                            <span>x${mat.quantity}</span>
+                            <img src="${itemsMap[recipe.resultingItemId]?.icon}" alt="${itemsMap[recipe.resultingItemId]?.name}" class="item-icon">
+                            <span>x${recipe.resultingItemQuantity}~</span>
                         </td>
-                    `).join("")}
-                    <td>
-                        <img src="${itemsMap[resultingItemId]?.icon}" alt="${itemsMap[resultingItemId]?.name}" class="item-icon">
-                        <span>${itemsMap[resultingItemId]?.name}</span>
-                    </td>
-                    <td>${formatCurrency(combinedValue)}</td>
-                    <td style="color: ${profit >= 0 ? 'green' : 'red'}; font-weight: bold;">
-                        ${formatCurrency(profit)}
-                    </td>
-                </tr>
-            `;
-            tableBody.innerHTML += row;
+                        <td>${formatCurrency(combinedValue)}</td>
+                        <td style="color: ${profit >= 0 ? 'green' : 'red'}; font-weight: bold;">
+                            ${formatCurrency(profit)}
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
         }
 
-        // Función para formatear la moneda
         function formatCurrency(value) {
-            const gold = Math.floor(value / 10000);
-            const silver = Math.floor((value % 10000) / 100);
-            return `${gold > 0 ? gold + ' Gold' : ''} ${silver > 0 ? silver + ' Silver' : ''}`.trim();
+            const gold = Math.floor(value / 10000); // 1 oro = 10,000 cobres
+            const silver = Math.floor((value % 10000) / 100); // 1 plata = 100 cobres
+            const copper = value % 100; // 1 cobre = 1 cobre
+
+            let result = [];
+            if (gold > 0) result.push(`${gold} 🟡`);
+            if (silver > 0) result.push(`${silver} ⚪`);
+            if (copper > 0) result.push(`${copper} 🔴`);
+
+            return result.join(" ").trim() || "0 🔴"; // Si no hay valor, mostrar "0 🔴"
         }
 
-        // Llamada inicial para obtener los datos
-        fetchProfitData();
+        function clearResults() {
+            const tableBody = document.getElementById("profit-table");
+            tableBody.innerHTML = `<tr><td colspan="7">Presiona el botón para calcular...</td></tr>`;
+            document.getElementById("error-message").textContent = "";
+        }
+
+        function sortTable(columnIndex) {
+            const table = document.querySelector("table");
+            const tbody = table.querySelector("tbody");
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+
+            const isAsc = table.querySelector(`th:nth-child(${columnIndex + 1})`).classList.toggle("asc");
+
+            rows.sort((a, b) => {
+                const aValue = a.cells[columnIndex].textContent;
+                const bValue = b.cells[columnIndex].textContent;
+
+                if (columnIndex === 5 || columnIndex === 6) { // Columnas numéricas
+                    return isAsc ? aValue - bValue : bValue - aValue;
+                } else { // Columnas de texto
+                    return isAsc ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+                }
+            });
+
+            tbody.innerHTML = "";
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        fetchProfitData(); // Llamada inicial
     </script>
 </body>
 </html>

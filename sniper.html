@@ -3,86 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gangas GW2 - Nivel 80+</title>
-    <link rel="stylesheet" href="styles.css"> <!-- Usar el mismo CSS global para unificar el diseño -->
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f8f9fa;
-        }
-        .sidebar {
-            width: 250px;
-            height: 100vh;
-            position: fixed;
-            background-color: #343a40;
-            color: white;
-            padding-top: 20px;
-        }
-        .sidebar h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .sidebar ul {
-            list-style: none;
-            padding: 0;
-        }
-        .sidebar ul li {
-            margin: 15px 0;
-        }
-        .sidebar ul li a {
-            color: white;
-            text-decoration: none;
-            padding: 10px 20px;
-            display: block;
-        }
-        .sidebar ul li a:hover, .sidebar ul li a.active {
-            background-color: #007bff;
-        }
-        .content {
-            margin-left: 250px;
-            padding: 20px;
-            background-color: white;
-            height: 100vh;
-            overflow-y: auto;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        .button-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        button {
-            padding: 10px 20px;
-            cursor: pointer;
-            background-color: #28a745;
-            border: none;
-            color: white;
-            font-size: 16px;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #218838;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: center;
-        }
-        th {
-            background-color: #007bff;
-            color: white;
-        }
-    </style>
+    <title>WORK IN PROGRESS</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Usar el mismo CSS global -->
 </head>
 <body>
     <div class="sidebar">
@@ -91,26 +13,31 @@
             <li><a href="index.html">Home</a></li>
             <li><a href="profit-calculator.html">Profit Calculator</a></li>
             <li><a href="sniper.html" class="active">Sniper</a></li>
+            <li><a href="crafting-tracker.html" class="active">Crafting Tracker</a></li>
         </ul>
     </div>
 
     <div class="content">
-        <h1>Gangas en el Trading Post (Nivel 80+)</h1>
+        <h1>Snipping en el Trading Post (Nivel 80+) <br>WORK IN PROGRESS </h1>
         <div class="button-container">
             <button onclick="fetchMarketData()">Actualizar Lista</button>
+            <button id="clear-button" onclick="clearResults()">Limpiar Resultados</button>
         </div>
+        <div id="loading-spinner" class="spinner"></div>
         <table>
             <thead>
                 <tr>
-                    <th>Nombre</th>
-                    <th>Nivel</th>
-                    <th>Precio (platas)</th>
+                    <th class="sortable" onclick="sortTable(0)">Nombre</th>
+                    <th class="sortable" onclick="sortTable(1)">Nivel</th>
+                    <th class="sortable" onclick="sortTable(2)">Rareza</th>
+                    <th class="sortable" onclick="sortTable(3)">Precio (platas)</th>
                 </tr>
             </thead>
             <tbody id="market-table">
-                <tr><td colspan="3">Presiona el botón para obtener datos...</td></tr>
+                <tr><td colspan="4">Presiona el botón para obtener datos...</td></tr>
             </tbody>
         </table>
+        <p id="error-message"></p>
     </div>
 
     <script>
@@ -118,28 +45,37 @@
             const listingsUrl = "https://api.guildwars2.com/v2/commerce/listings";
             const itemsUrl = "https://api.guildwars2.com/v2/items";
             const maxPrice = 20; // 0.20 platas en cobre
-            
+            const rarityFilter = ["Masterwork", "Rare", "Exotic", "Ascended", "Legendary"];
+            const tableBody = document.getElementById("market-table");
+            const loadingSpinner = document.getElementById("loading-spinner");
+            const errorMessage = document.getElementById("error-message");
+
+            loadingSpinner.style.display = "block";
+            tableBody.innerHTML = "";
+            errorMessage.textContent = "";
+
             try {
                 // Obtener IDs de listados en el mercado
                 const listingResponse = await fetch(listingsUrl);
                 const listingIds = await listingResponse.json();
-                
+
                 // Obtener detalles de ítems
                 const itemResponse = await fetch(`${itemsUrl}?ids=${listingIds.slice(0, 200).join(',')}`);
                 const itemsData = await itemResponse.json();
-                
+
                 let filteredItems = [];
                 for (let item of itemsData) {
-                    if (item.level >= 80) {
+                    if (item.level >= 80 && rarityFilter.includes(item.rarity)) {
                         let listingData = await fetch(`${listingsUrl}/${item.id}`);
                         listingData = await listingData.json();
-                        
+
                         if (listingData.buys.length > 0) {
                             let price = listingData.buys[0].unit_price / 100; // Convertir a platas
-                            if (price <= 0.80) {
+                            if (price <= 0.20) {
                                 filteredItems.push({
                                     name: item.name,
                                     level: item.level,
+                                    rarity: item.rarity,
                                     price: price.toFixed(2) + ' <span style="color: silver;">⚪</span>'
                                 });
                             }
@@ -148,18 +84,47 @@
                 }
 
                 // Actualizar tabla
-                const tableBody = document.getElementById("market-table");
-                tableBody.innerHTML = "";
                 if (filteredItems.length === 0) {
-                    tableBody.innerHTML = `<tr><td colspan="3">No se encontraron gangas...</td></tr>`;
+                    tableBody.innerHTML = `<tr><td colspan="4">No se encontraron gangas...</td></tr>`;
                 } else {
                     filteredItems.forEach(item => {
-                        tableBody.innerHTML += `<tr><td>${item.name}</td><td>${item.level}</td><td>${item.price}</td></tr>`;
+                        tableBody.innerHTML += `<tr><td>${item.name}</td><td>${item.level}</td><td>${item.rarity}</td><td>${item.price}</td></tr>`;
                     });
                 }
             } catch (error) {
                 console.error("Error obteniendo datos del mercado:", error);
+                errorMessage.textContent = "Error al obtener datos del mercado. Inténtalo de nuevo.";
+            } finally {
+                loadingSpinner.style.display = "none";
             }
+        }
+
+        function clearResults() {
+            const tableBody = document.getElementById("market-table");
+            tableBody.innerHTML = `<tr><td colspan="4">Presiona el botón para obtener datos...</td></tr>`;
+            document.getElementById("error-message").textContent = "";
+        }
+
+        function sortTable(columnIndex) {
+            const table = document.querySelector("table");
+            const tbody = table.querySelector("tbody");
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+
+            const isAsc = table.querySelector(`th:nth-child(${columnIndex + 1})`).classList.toggle("asc");
+
+            rows.sort((a, b) => {
+                const aValue = a.cells[columnIndex].textContent;
+                const bValue = b.cells[columnIndex].textContent;
+
+                if (columnIndex === 1 || columnIndex === 3) { // Columnas numéricas
+                    return isAsc ? aValue - bValue : bValue - aValue;
+                } else { // Columnas de texto
+                    return isAsc ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+                }
+            });
+
+            tbody.innerHTML = "";
+            rows.forEach(row => tbody.appendChild(row));
         }
     </script>
 </body>
