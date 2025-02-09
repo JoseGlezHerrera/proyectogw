@@ -100,7 +100,7 @@ async function fetchCraftableItems() {
     const itemsUrl = "https://api.guildwars2.com/v2/items";
     const rarityFilter = ["Rare", "Exotic", "Ascended", "Legendary"];
     const typeFilter = ["Armor", "Weapon", "Trinket"];
-    const maxCraftingPrice = 8000; // 20 platas en cobres
+    const maxCraftingPrice = 2000; // 20 platas en cobres
 
     try {
         console.log("Obteniendo lista de recetas...");
